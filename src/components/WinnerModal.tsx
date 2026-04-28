@@ -58,9 +58,19 @@ export function WinnerModal({ place, category, onSpinAgain, onBack }: Props) {
 
   const priceDisplay = place.priceLevel ? PRICE_DISPLAY_MAP[place.priceLevel] : null;
 
-  const tiktokUrl = `https://www.tiktok.com/search?q=${encodeURIComponent(
-    place.displayName.text + ' Kuala Lumpur review'
-  )}`;
+  const tiktokKeyword = encodeURIComponent(place.displayName.text + ' Kuala Lumpur review');
+  const tiktokWebUrl = `https://www.tiktok.com/search?q=${tiktokKeyword}`;
+
+  const openTikTok = () => {
+    // Try to open TikTok app via deep link
+    window.location.href = `tiktok://search?keyword=${tiktokKeyword}`;
+    // Fallback: if app didn't open within 1.5s, open web version
+    // (setTimeout is delayed when app opens and page goes to background,
+    //  so this only fires if TikTok isn't installed)
+    setTimeout(() => {
+      window.open(tiktokWebUrl, '_blank');
+    }, 1500);
+  };
 
   return (
     <div
@@ -167,19 +177,17 @@ export function WinnerModal({ place, category, onSpinAgain, onBack }: Props) {
             <p style={{ color: '#888', fontSize: 11, textTransform: 'uppercase', letterSpacing: 2, margin: 0 }}>
               📹 Videos & Reviews
             </p>
-            <a
-              href={tiktokUrl}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              onClick={openTikTok}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)',
                 color: '#fff', padding: '4px 10px', borderRadius: 20,
-                fontSize: 11, fontWeight: 600, textDecoration: 'none',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
               }}
             >
               🎵 TikTok
-            </a>
+            </button>
           </div>
 
           {videosLoading ? (
