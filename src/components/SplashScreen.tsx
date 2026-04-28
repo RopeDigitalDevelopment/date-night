@@ -3,7 +3,6 @@ import { Logo } from './Logo';
 interface Props {
   onStart: () => void;
   onSkip: () => void;
-  onSettings: () => void;
 }
 
 const starPositions = Array.from({ length: 30 }, (_, i) => ({
@@ -14,7 +13,7 @@ const starPositions = Array.from({ length: 30 }, (_, i) => ({
   opacity: 0.1 + (i % 4) * 0.1,
 }));
 
-export function SplashScreen({ onStart, onSkip, onSettings }: Props) {
+export function SplashScreen({ onStart, onSkip }: Props) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', textAlign: 'center', position: 'relative' }}>
       {/* Static star field */}
@@ -82,12 +81,6 @@ export function SplashScreen({ onStart, onSkip, onSettings }: Props) {
         Skip setup — surprise me
       </button>
 
-      <button
-        onClick={onSettings}
-        style={{ position: 'absolute', bottom: 28, right: 24, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#555', borderRadius: 20, padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}
-      >
-        ⚙️ API Settings
-      </button>
     </div>
   );
 }

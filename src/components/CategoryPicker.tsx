@@ -7,11 +7,10 @@ interface Props {
   categories: Category[];
   prefs: UserPrefs;
   onPick: (categoryIds: string[], filters: Filters) => void;
-  onSettings: () => void;
   error: string | null;
 }
 
-export function CategoryPicker({ categories, prefs, onPick, onSettings, error }: Props) {
+export function CategoryPicker({ categories, prefs, onPick, error }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [wildcard, setWildcard] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -192,7 +191,6 @@ export function CategoryPicker({ categories, prefs, onPick, onSettings, error }:
           filters={filters}
           setFilters={setFilters}
           onClose={() => setShowFilters(false)}
-          onSettings={onSettings}
         />
       )}
     </div>

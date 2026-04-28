@@ -6,10 +6,9 @@ interface Props {
   filters: Filters;
   setFilters: (f: Filters) => void;
   onClose: () => void;
-  onSettings: () => void;
 }
 
-export function FiltersPanel({ filters, setFilters, onClose, onSettings }: Props) {
+export function FiltersPanel({ filters, setFilters, onClose }: Props) {
   const [local, setLocal] = useState<Filters>({ ...filters });
 
   const toggleDietary = (val: string) => {
@@ -205,13 +204,6 @@ export function FiltersPanel({ filters, setFilters, onClose, onSettings }: Props
           Apply Filters
         </button>
 
-        {/* Settings link */}
-        <button
-          onClick={() => { onClose(); onSettings(); }}
-          style={{ display: 'block', margin: '0 auto', background: 'none', border: 'none', color: '#444', cursor: 'pointer', fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}
-        >
-          ⚙️ API Settings
-        </button>
       </div>
     </div>
   );

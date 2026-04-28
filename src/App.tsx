@@ -10,7 +10,6 @@ import { Onboarding } from './components/Onboarding';
 import { CategoryPicker } from './components/CategoryPicker';
 import { RandomPicker } from './components/RandomPicker';
 import { WinnerModal } from './components/WinnerModal';
-import { SettingsModal } from './components/SettingsModal';
 
 type Screen = 'splash' | 'onboarding' | 'home' | 'loading' | 'pick' | 'winner';
 
@@ -30,15 +29,8 @@ export function App() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [winner, setWinner] = useState<Place | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-
   const handlePick = useCallback(async (categoryIds: string[], filters: Filters) => {
     const settings = getSettings();
-
-    if (!settings.apiKey.trim()) {
-      setShowSettings(true);
-      return;
-    }
 
     const cats = CATEGORIES.filter(c => categoryIds.includes(c.id));
     setActiveCategories(cats);
@@ -160,7 +152,6 @@ export function App() {
             <SplashScreen
               onStart={() => setScreen('onboarding')}
               onSkip={() => { setPrefs(DEFAULT_PREFS); setScreen('home'); }}
-              onSettings={() => setShowSettings(true)}
             />
           )}
 
@@ -175,7 +166,6 @@ export function App() {
               categories={CATEGORIES}
               prefs={prefs}
               onPick={handlePick}
-              onSettings={() => setShowSettings(true)}
               error={error}
             />
           )}
@@ -225,7 +215,6 @@ export function App() {
         </div>
       </div>
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </>
   );
 }
