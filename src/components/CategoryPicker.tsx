@@ -1,16 +1,27 @@
 import { useState } from 'react';
-import { Category } from '../types';
+import { Category, UserPrefs, Filters } from '../types';
+import { Logo } from './Logo';
+import { FiltersPanel } from './FiltersPanel';
 
 interface Props {
   categories: Category[];
-  onPick: (categoryIds: string[]) => void;
+  prefs: UserPrefs;
+  onPick: (categoryIds: string[], filters: Filters) => void;
   onSettings: () => void;
   error: string | null;
 }
 
-export function CategoryPicker({ categories, onPick, onSettings, error }: Props) {
+export function CategoryPicker({ categories, prefs, onPick, onSettings, error }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [wildcard, setWildcard] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
+    openNow: prefs.openNow,
+    minRating: prefs.minRating,
+    priceLevel: prefs.priceLevel,
+    dietary: [...prefs.dietary],
+    dressCode: prefs.dressCode,
+  });
 
   const toggleCategory = (id: string) => {
     if (wildcard) setWildcard(false);
@@ -30,123 +41,160 @@ export function CategoryPicker({ categories, onPick, onSettings, error }: Props)
   const handlePick = () => {
     if (!canPick) return;
     const ids = wildcard ? categories.map(c => c.id) : selectedIds;
-    onPick(ids);
+    onPick(ids, filters);
   };
 
+  const activeFilterCount = [
+    filters.openNow,
+    filters.priceLevel > 0,
+    filters.minRating > 3.5,
+    filters.dietary.length > 0,
+    filters.dressCode !== 'No preference',
+  ].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#0f0f1a]">
+    <div style={{ minHeight: '100vh', padding: '0 16px 40px', fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header */}
-      <div className="flex items-start justify-between px-6 pt-14 pb-4">
-        <div>
-          <p className="text-white/40 text-xs tracking-widest uppercase mb-1">Tonight's plan</p>
-          <h1 className="text-4xl font-bold text-white leading-tight">Date<br />Night 🌙</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Logo size={36} />
+          <div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: '#fff', fontWeight: 700, lineHeight: 1 }}>
+              Date Night
+            </div>
+            <div style={{ fontSize: 10, color: '#ff3c6e', letterSpacing: 3, textTransform: 'uppercase' as const }}>
+              Kuala Lumpur
+            </div>
+          </div>
         </div>
         <button
-          onClick={onSettings}
-          className="mt-1 w-11 h-11 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-lg active:bg-white/15 transition-colors"
-          aria-label="Settings"
+          onClick={() => setShowFilters(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: activeFilterCount > 0 ? 'rgba(255,60,110,0.2)' : 'rgba(255,255,255,0.05)',
+            border: activeFilterCount > 0 ? '2px solid #ff3c6e' : '2px solid rgba(255,255,255,0.1)',
+            color: activeFilterCount > 0 ? '#ff3c6e' : '#aaa',
+            padding: '8px 16px',
+            borderRadius: 20,
+            cursor: 'pointer',
+            fontSize: 14,
+            fontFamily: "'DM Sans', sans-serif",
+          }}
         >
-          ⚙️
+          🎚️ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </button>
       </div>
 
-      <div className="px-6 pb-3">
-        <p className="text-white/40 text-sm">
-          {wildcard
-            ? 'Picking from everywhere 🎲'
-            : selectedIds.length === 0
-              ? 'What are you in the mood for?'
-              : `${selectedIds.length} categor${selectedIds.length === 1 ? 'y' : 'ies'} selected`}
-        </p>
-      </div>
+      <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>
+        What's the plan?
+      </h1>
+      <p style={{ color: '#666', fontSize: 14, margin: '0 0 20px' }}>
+        Pick categories, then let fate decide ✨
+      </p>
 
       {error && (
-        <div className="mx-6 mb-3 p-4 bg-red-500/15 border border-red-500/25 rounded-2xl text-red-300 text-sm">
+        <div style={{
+          margin: '0 0 16px',
+          padding: '14px 16px',
+          background: 'rgba(255,60,110,0.1)',
+          border: '1px solid rgba(255,60,110,0.3)',
+          borderRadius: 14,
+          color: '#ff9aaa',
+          fontSize: 14,
+        }}>
           {error}
         </div>
       )}
 
-      {/* WILDCARD banner */}
-      <div className="px-6 mb-4">
-        <button
-          onClick={toggleWildcard}
-          className={`
-            w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3
-            border-2 transition-all duration-200 active:scale-95
-            ${wildcard
-              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 border-transparent text-white shadow-lg shadow-orange-500/30'
-              : 'bg-white/5 border-white/10 text-white/60'}
-          `}
-        >
-          <span className="text-2xl">🎲</span>
-          <div className="text-left">
-            <div className="font-bold">Wildcard — Surprise Us!</div>
-            <div className={`text-xs font-normal ${wildcard ? 'text-white/80' : 'text-white/30'}`}>
-              Pick randomly from all categories
-            </div>
-          </div>
-        </button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        {categories.map(cat => {
+          const active = selectedIds.includes(cat.id) && !wildcard;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => toggleCategory(cat.id)}
+              style={{
+                padding: '20px 16px',
+                borderRadius: 16,
+                border: active ? '2px solid #ff3c6e' : '2px solid rgba(255,255,255,0.08)',
+                background: active
+                  ? 'linear-gradient(135deg, rgba(255,60,110,0.2), rgba(255,107,53,0.1))'
+                  : 'rgba(255,255,255,0.03)',
+                color: active ? '#fff' : '#aaa',
+                cursor: 'pointer',
+                textAlign: 'left' as const,
+                transition: 'all 0.2s',
+                boxShadow: active ? '0 4px 20px rgba(255,60,110,0.2)' : 'none',
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              <div style={{ fontSize: 28, marginBottom: 6 }}>{cat.emoji}</div>
+              <div style={{ fontSize: 13, fontWeight: active ? 700 : 400, lineHeight: 1.3 }}>{cat.name}</div>
+              <div style={{ fontSize: 11, color: active ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)', marginTop: 3 }}>
+                {cat.description}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Category chips */}
-      <div className="px-6 flex-1">
-        <p className="text-white/30 text-xs uppercase tracking-wider mb-3">
-          — or pick specific vibes —
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          {categories.map(cat => {
-            const selected = selectedIds.includes(cat.id);
-            return (
-              <button
-                key={cat.id}
-                onClick={() => toggleCategory(cat.id)}
-                className={`
-                  rounded-2xl p-4 flex items-center gap-3 text-left
-                  border-2 transition-all duration-150 active:scale-95
-                  ${selected
-                    ? `bg-gradient-to-br ${cat.gradient} border-transparent shadow-lg`
-                    : 'bg-white/5 border-white/8 hover:border-white/20'}
-                `}
-              >
-                <span className="text-2xl flex-shrink-0">{cat.emoji}</span>
-                <div className="min-w-0">
-                  <div className={`font-bold text-sm leading-tight ${selected ? 'text-white' : 'text-white/70'}`}>
-                    {cat.name}
-                  </div>
-                  <div className={`text-xs mt-0.5 ${selected ? 'text-white/70' : 'text-white/30'}`}>
-                    {cat.description}
-                  </div>
-                </div>
-                {selected && (
-                  <div className="ml-auto flex-shrink-0 w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs">
-                    ✓
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <button
+        onClick={toggleWildcard}
+        style={{
+          width: '100%',
+          padding: '16px',
+          borderRadius: 16,
+          border: wildcard ? '2px solid #ffd700' : '2px solid rgba(255,255,255,0.08)',
+          background: wildcard
+            ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,107,53,0.1))'
+            : 'rgba(255,255,255,0.03)',
+          color: wildcard ? '#ffd700' : '#aaa',
+          cursor: 'pointer',
+          fontSize: 16,
+          fontWeight: wildcard ? 700 : 400,
+          marginBottom: 28,
+          transition: 'all 0.2s',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        🎲 Wildcard — Surprise Us Completely
+      </button>
 
-      {/* CTA */}
-      <div className="px-6 py-6">
-        <button
-          onClick={handlePick}
-          disabled={!canPick}
-          className={`
-            w-full py-5 rounded-2xl font-bold text-lg transition-all duration-200
-            ${canPick
-              ? 'bg-white text-[#0f0f1a] shadow-xl active:scale-95'
-              : 'bg-white/8 text-white/20 cursor-not-allowed'}
-          `}
-        >
-          {canPick ? '🎲  Pick somewhere for us' : 'Select a category above'}
-        </button>
-      </div>
+      <button
+        onClick={handlePick}
+        disabled={!canPick}
+        style={{
+          width: '100%',
+          padding: '20px',
+          borderRadius: 16,
+          background: canPick ? 'linear-gradient(135deg, #ff3c6e, #ff6b35)' : 'rgba(255,255,255,0.05)',
+          border: 'none',
+          color: canPick ? '#fff' : '#444',
+          fontSize: 18,
+          fontWeight: 700,
+          cursor: canPick ? 'pointer' : 'default',
+          boxShadow: canPick ? '0 12px 40px rgba(255,60,110,0.4)' : 'none',
+          transition: 'all 0.3s',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        {canPick ? '🎰 Roll the Dice!' : 'Pick at least one category'}
+      </button>
 
-      <div className="pb-4 text-center">
-        <p className="text-white/20 text-xs">Powered by Google Places · Kuala Lumpur</p>
-      </div>
+      {showFilters && (
+        <FiltersPanel
+          filters={filters}
+          setFilters={setFilters}
+          onClose={() => setShowFilters(false)}
+          onSettings={onSettings}
+        />
+      )}
     </div>
   );
 }

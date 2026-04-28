@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Place, Category } from '../types';
 import { getPhotoUrl } from '../lib/places';
 import { getSettings } from '../lib/storage';
+import { CATEGORIES } from '../lib/categories';
+import { PRICE_DISPLAY_MAP } from '../lib/constants';
 
 interface Props {
   place: Place;
@@ -10,128 +12,209 @@ interface Props {
   onBack: () => void;
 }
 
-const PRICE_MAP: Record<string, string> = {
-  PRICE_LEVEL_FREE: 'Free',
-  PRICE_LEVEL_INEXPENSIVE: 'RM',
-  PRICE_LEVEL_MODERATE: 'RM RM',
-  PRICE_LEVEL_EXPENSIVE: 'RM RM RM',
-  PRICE_LEVEL_VERY_EXPENSIVE: 'RM RM RM RM',
-};
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: 5 }).map((_, i) => {
-        const filled = i < Math.floor(rating);
-        const half = !filled && i === Math.floor(rating) && rating % 1 >= 0.5;
-        return (
-          <span
-            key={i}
-            className={filled ? 'text-yellow-400' : half ? 'text-yellow-400/50' : 'text-white/15'}
-          >
-            ★
-          </span>
-        );
-      })}
-      <span className="text-white/60 text-sm ml-1">{rating.toFixed(1)}</span>
-    </div>
-  );
+function starRating(r: number): string {
+  return '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
 }
 
 export function WinnerModal({ place, category, onSpinAgain, onBack }: Props) {
-  const [visible, setVisible] = useState(true); // start visible immediately
+  const [show, setShow] = useState(false);
   const settings = getSettings();
 
   useEffect(() => {
-    setVisible(true);
+    const id = setTimeout(() => setShow(true), 80);
+    return () => clearTimeout(id);
   }, []);
 
   const photoUrl = place.photos?.[0]
     ? getPhotoUrl(place.photos[0].name, settings.apiKey)
     : null;
 
+  const catEmoji =
+    CATEGORIES.find(c => c.types.some(t => t === place.primaryType))?.emoji ??
+    category.emoji;
+
+  const mapsUrl =
+    place.googleMapsUri ??
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      place.displayName.text + ' ' + (place.shortFormattedAddress ?? '')
+    )}`;
+
+  const priceDisplay = place.priceLevel ? PRICE_DISPLAY_MAP[place.priceLevel] : null;
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#0f0f1a]">
-      {/* Hero header */}
-      <div
-        className={`px-6 pt-14 pb-6 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
-      >
-        <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Tonight you're going to</p>
-        <h1 className="text-3xl font-bold text-white leading-tight">{place.displayName.text}</h1>
-        <p className="text-white/40 text-sm mt-1">{category.emoji} {category.name}</p>
+    <div
+      style={{
+        opacity: show ? 1 : 0,
+        transform: show ? 'scale(1)' : 'scale(0.92)',
+        transition: 'all 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        padding: '24px 16px',
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <span style={{ fontSize: 32 }}>🎊</span>
       </div>
+      <p style={{
+        textAlign: 'center',
+        color: '#ff3c6e',
+        fontFamily: "'Playfair Display', serif",
+        letterSpacing: 3,
+        fontSize: 12,
+        textTransform: 'uppercase' as const,
+        marginBottom: 16,
+      }}>
+        Tonight you're going to…
+      </p>
 
-      {/* Photo */}
-      {photoUrl && (
-        <div
-          className={`mx-6 rounded-3xl overflow-hidden bg-white/5 transition-all duration-700 delay-75 ${visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-          style={{ height: 200 }}
-        >
-          <img
-            src={photoUrl}
-            alt={place.displayName.text}
-            className="w-full h-full object-cover"
-          />
+      <div style={{
+        background: 'linear-gradient(145deg, #1a0a2e, #2d1145)',
+        borderRadius: 24,
+        border: '2px solid #ff3c6e',
+        overflow: 'hidden',
+        boxShadow: '0 0 80px rgba(255,60,110,0.25), 0 20px 60px rgba(0,0,0,0.5)',
+        maxWidth: 420,
+        margin: '0 auto',
+      }}>
+        {/* Photo / placeholder */}
+        <div style={{
+          height: 200,
+          background: photoUrl
+            ? undefined
+            : 'linear-gradient(135deg, #2d1145 0%, #1a0a2e 50%, #0f0f1a 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative' as const,
+          overflow: 'hidden',
+        }}>
+          {photoUrl ? (
+            <img src={photoUrl} alt={place.displayName.text} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: 64 }}>{catEmoji}</span>
+          )}
+
+          {/* Open / closed badge */}
+          {place.currentOpeningHours && (
+            <div style={{
+              position: 'absolute',
+              bottom: 12,
+              right: 12,
+              background: place.currentOpeningHours.openNow ? 'rgba(0,200,100,0.9)' : 'rgba(200,50,50,0.9)',
+              color: '#fff',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 600,
+            }}>
+              {place.currentOpeningHours.openNow ? '✓ Open Now' : '✗ Closed'}
+            </div>
+          )}
+
+          {/* Price badge */}
+          {priceDisplay && (
+            <div style={{
+              position: 'absolute',
+              bottom: 12,
+              left: 12,
+              background: 'rgba(255,215,0,0.2)',
+              border: '1px solid rgba(255,215,0,0.5)',
+              color: '#ffd700',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 700,
+            }}>
+              {priceDisplay}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Details card */}
-      <div
-        className={`mx-6 mt-4 bg-white/5 border border-white/8 rounded-3xl p-5 space-y-3 transition-all duration-700 delay-150 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
-      >
-        {place.rating && (
-          <div className="flex items-center justify-between">
-            <StarRating rating={place.rating} />
-            {place.userRatingCount && (
-              <span className="text-white/30 text-xs">{place.userRatingCount.toLocaleString()} reviews</span>
-            )}
-          </div>
-        )}
+        {/* Info */}
+        <div style={{ padding: '24px 24px 8px' }}>
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 26,
+            fontWeight: 700,
+            color: '#fff',
+            margin: '0 0 8px',
+            lineHeight: 1.2,
+          }}>
+            {place.displayName.text}
+          </h2>
 
-        {place.currentOpeningHours && (
-          <div className={`text-sm font-semibold flex items-center gap-2 ${place.currentOpeningHours.openNow ? 'text-emerald-400' : 'text-red-400'}`}>
-            <span className={`w-2 h-2 rounded-full ${place.currentOpeningHours.openNow ? 'bg-emerald-400' : 'bg-red-400'}`} />
-            {place.currentOpeningHours.openNow ? 'Open now' : 'Closed now'}
-          </div>
-        )}
+          {place.rating && (
+            <div style={{ color: '#ffd700', fontSize: 18, marginBottom: 8 }}>
+              {starRating(place.rating)}{' '}
+              <span style={{ color: '#999', fontSize: 14 }}>{place.rating.toFixed(1)}</span>
+              {place.userRatingCount && (
+                <span style={{ color: '#555', fontSize: 12, marginLeft: 6 }}>
+                  ({place.userRatingCount.toLocaleString()} reviews)
+                </span>
+              )}
+            </div>
+          )}
 
-        {place.shortFormattedAddress && (
-          <p className="text-white/50 text-sm leading-relaxed">{place.shortFormattedAddress}</p>
-        )}
+          {place.shortFormattedAddress && (
+            <p style={{ color: '#aaa', fontSize: 14, margin: '0 0 16px' }}>
+              📍 {place.shortFormattedAddress}
+            </p>
+          )}
+        </div>
 
-        {place.priceLevel && PRICE_MAP[place.priceLevel] && (
-          <p className="text-white/40 text-sm">{PRICE_MAP[place.priceLevel]}</p>
-        )}
-      </div>
-
-      <div className="flex-1" />
-
-      {/* Actions */}
-      <div
-        className={`px-6 pb-12 space-y-3 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-      >
-        {place.googleMapsUri && (
+        {/* Actions */}
+        <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <a
-            href={place.googleMapsUri}
+            href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`block w-full py-4 rounded-2xl font-bold text-center text-white bg-gradient-to-r ${category.gradient} shadow-lg text-base active:opacity-90 transition-opacity`}
+            style={{
+              display: 'block',
+              textAlign: 'center' as const,
+              background: 'linear-gradient(135deg, #ff3c6e, #ff6b35)',
+              color: '#fff',
+              padding: '16px',
+              borderRadius: 14,
+              textDecoration: 'none',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: '0 8px 30px rgba(255,60,110,0.4)',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
           >
-            🗺️  Open in Google Maps
+            🗺️ Open in Google Maps
           </a>
-        )}
-        <button
-          onClick={onSpinAgain}
-          className="w-full py-4 rounded-2xl font-bold text-white bg-white/8 border border-white/10 text-base active:bg-white/15 transition-colors"
-        >
-          🔄  Spin Again
-        </button>
-        <button
-          onClick={onBack}
-          className="w-full py-3 text-white/30 text-sm active:text-white/50 transition-colors"
-        >
-          ← Change Category
-        </button>
+          <button
+            onClick={onSpinAgain}
+            style={{
+              background: 'rgba(255,60,110,0.1)',
+              border: '2px solid #ff3c6e',
+              color: '#ff3c6e',
+              padding: '14px',
+              borderRadius: 14,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            🎲 Spin Again
+          </button>
+          <button
+            onClick={onBack}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#666',
+              padding: '10px',
+              borderRadius: 14,
+              fontSize: 14,
+              cursor: 'pointer',
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+          >
+            ← Change Categories
+          </button>
+        </div>
       </div>
     </div>
   );

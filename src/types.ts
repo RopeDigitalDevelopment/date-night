@@ -42,3 +42,23 @@ export interface AppSettings {
   lat: number;
   lng: number;
 }
+
+export interface UserPrefs {
+  vibes: string[];
+  dietary: string[];
+  dressCode: string;
+  minRating: number;
+  priceLevel: number;
+  openNow: boolean;
+  radius: number;
+  lat: number;
+  lng: number;
+}
+
+export interface Filters {
+  openNow: boolean;
+  minRating: number;
+  priceLevel: number;
+  dietary: string[];
+  dressCode: string;
+}

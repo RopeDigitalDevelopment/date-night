@@ -3,7 +3,7 @@ import { Category } from '../types';
 export const CATEGORIES: Category[] = [
   {
     id: 'food',
-    name: 'Cafes & Restaurants',
+    name: 'Cafés & Restaurants',
     emoji: '🍽️',
     description: 'Restaurants, cafes & bars',
     gradient: 'from-orange-500 to-rose-500',
@@ -12,7 +12,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'activities',
     name: 'Activities',
-    emoji: '🎭',
+    emoji: '🎬',
     description: 'Cinema, bowling & entertainment',
     gradient: 'from-violet-500 to-indigo-500',
     types: ['movie_theater', 'bowling_alley', 'amusement_park', 'night_club'],
@@ -20,7 +20,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'sports',
     name: 'Sports & Fitness',
-    emoji: '🎾',
+    emoji: '🏃',
     description: 'Padel, gym & sports clubs',
     gradient: 'from-blue-500 to-cyan-500',
     types: ['sports_club', 'gym', 'golf_course'],
