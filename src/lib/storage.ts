@@ -2,7 +2,7 @@ import { AppSettings, Place } from '../types';
 
 const SETTINGS_KEY = 'datenite_settings';
 const CACHE_PREFIX = 'datenite_cache_';
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes — keeps openNow data fresh
 
 const DEFAULT_SETTINGS: AppSettings = {
   apiKey: import.meta.env.VITE_PLACES_API_KEY ?? '',

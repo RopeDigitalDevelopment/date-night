@@ -51,7 +51,7 @@ export const DEFAULT_PREFS: UserPrefs = {
   dressCode: 'No preference',
   minRating: 3.5,
   priceLevel: 0,
-  openNow: false,
+  openNow: true,
   radius: 20,
   lat: 3.1529,
   lng: 101.703,
